@@ -174,7 +174,7 @@ export default async function ScoringPage() {
             {example.tier}.{" "}
             <Link
               href={`/accounts/${encodeURIComponent(account.domain)}`}
-              className="text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+              className="text-brand underline-offset-2 hover:underline"
             >
               Open this account
             </Link>

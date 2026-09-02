@@ -31,7 +31,7 @@ export function AccountHeader({
             href={account.domain}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-block text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+            className="mt-1 inline-block text-sm text-brand underline-offset-2 hover:underline"
           >
             {account.domain.replace(/^https?:\/\//, "")} ↗
           </a>

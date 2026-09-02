@@ -1,24 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Adyen-inspired accent tokens. The UI is otherwise built on Tailwind's zinc
+   neutrals; these add the green identity. */
+@theme {
+  --color-brand: #0abf53; /* Adyen green */
+  --color-brand-strong: #09a648;
+  --color-brand-soft: #e7f8ee;
+  --color-brand-fg: #06371e;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode: override the raw variables on :root (Tailwind utilities read
+   var(--color-*), so this is all that's needed). */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-brand: #1ecb66;
+    --color-brand-strong: #17b95b;
+    --color-brand-soft: #0e3226;
+    --color-brand-fg: #d8f6e4;
   }
 }
 
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 30%, transparent);
 }

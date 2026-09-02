@@ -139,7 +139,7 @@ export function Dashboard({
               onClick={() => setTier(t)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                 tier === t
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  ? "bg-brand text-white"
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               }`}
             >
@@ -245,7 +245,7 @@ export function Dashboard({
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
                     <Link
                       href={`/accounts/${encodeURIComponent(a.domain)}/signals`}
-                      className="text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                      className="text-xs font-medium text-brand underline-offset-2 hover:underline"
                     >
                       Signals →
                     </Link>
@@ -287,10 +287,10 @@ function SummaryCards({ entries }: { entries: ScoredAccount[] }) {
       {cards.map((c) => (
         <div
           key={c.label}
-          className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
+          className="rounded-lg border border-zinc-200 border-t-2 border-t-brand bg-white p-3 dark:border-zinc-800 dark:border-t-brand dark:bg-zinc-900"
         >
           <div className="text-xs text-zinc-500 dark:text-zinc-400">{c.label}</div>
-          <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+          <div className="mt-1 text-xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
             {c.value}
           </div>
         </div>

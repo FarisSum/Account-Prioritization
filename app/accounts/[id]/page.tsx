@@ -59,7 +59,7 @@ export default async function AccountScorePage({
         />
         <Link
           href="/scoring"
-          className="shrink-0 text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+          className="shrink-0 text-xs font-medium text-brand underline-offset-2 hover:underline"
         >
           How scoring works →
         </Link>
