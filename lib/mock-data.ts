@@ -77,17 +77,19 @@ export function mockTelemetry(domain: string): ProductTelemetry | null {
 export function mockGongSignals(domain: string): GongSignal[] {
   const a = MOCK_ACCOUNTS.find((x) => x.domain === domain);
   if (!a) return [];
+  const RECENT = "2026-07-15"; // inside the 6-month window
+  const OLD = "2025-11-10"; // outside it
   const rows: Omit<GongSignal, "domain" | "created_at">[] =
     a.employee_growth < 0
       ? [
-          { transcript_id: `${domain}#1`, category: "Competitive", sentiment: "Negative", signal: "Competitor evaluation", transcript_text: "We're comparing pricing and coverage with another processor as part of a vendor review." },
-          { transcript_id: `${domain}#2`, category: "Renewal", sentiment: "Negative", signal: "Pricing concern", transcript_text: "Our processing costs have become hard to justify given where volume is trending." },
-          { transcript_id: `${domain}#3`, category: "Stakeholder", sentiment: "Negative", signal: "Champion departed", transcript_text: "The person who owned this relationship has left and the new team is re-evaluating vendors." },
+          { transcript_id: `${domain}#1`, category: "Competitive", sentiment: "Negative", signal: "Competitor evaluation", transcript_text: "We're comparing pricing and coverage with another processor as part of a vendor review.", last_detected_date: RECENT },
+          { transcript_id: `${domain}#2`, category: "Renewal", sentiment: "Negative", signal: "Pricing concern", transcript_text: "Our processing costs have become hard to justify given where volume is trending.", last_detected_date: RECENT },
+          { transcript_id: `${domain}#3`, category: "Stakeholder", sentiment: "Negative", signal: "Champion departed", transcript_text: "The person who owned this relationship has left and the new team is re-evaluating vendors.", last_detected_date: OLD },
         ]
       : [
-          { transcript_id: `${domain}#1`, category: "Expansion", sentiment: "Positive", signal: "Volume growth", transcript_text: "Processing volume is up year over year and the forecast has it climbing further." },
-          { transcript_id: `${domain}#2`, category: "Cross-sell", sentiment: "Positive", signal: "Recurring Payments", transcript_text: "We want to consolidate subscription billing and expand our use of recurring payments." },
-          { transcript_id: `${domain}#3`, category: "Competitive", sentiment: "Negative", signal: "Competitor evaluation", transcript_text: "We're also benchmarking pricing with another provider as we scale." },
+          { transcript_id: `${domain}#1`, category: "Expansion", sentiment: "Positive", signal: "Volume growth", transcript_text: "Processing volume is up year over year and the forecast has it climbing further.", last_detected_date: RECENT },
+          { transcript_id: `${domain}#2`, category: "Cross-sell", sentiment: "Positive", signal: "Recurring Payments", transcript_text: "We want to consolidate subscription billing and expand our use of recurring payments.", last_detected_date: RECENT },
+          { transcript_id: `${domain}#3`, category: "Competitive", sentiment: "Negative", signal: "Competitor evaluation", transcript_text: "We're also benchmarking pricing with another provider as we scale.", last_detected_date: OLD },
         ];
   return rows.map((r) => ({ ...r, domain, created_at: TS }));
 }

@@ -69,5 +69,6 @@ export interface GongSignal {
   sentiment: GongSentiment;
   signal: string;
   transcript_text: string;
+  last_detected_date: string; // ISO date — when the signal was last heard on a call
   created_at: string;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { MeterBar, TierBadge } from "@/components/primitives";
+import { SECTION_SWATCH, SegmentedScoreBar, TierBadge } from "@/components/primitives";
 import { daysUntil, formatCompactCurrency, formatPercent, formatRelativeDays } from "@/lib/format";
 import type { PriorityTier } from "@/lib/scoring";
 import type { ScoredAccount } from "@/lib/view";
@@ -149,9 +149,22 @@ export function Dashboard({
         </div>
       </div>
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Showing {rows.length} of {entries.length} accounts
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+        <span>
+          Showing {rows.length} of {entries.length} accounts
+        </span>
+        <span className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.telemetry}`} /> Telemetry
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.crm}`} /> CRM
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.gong}`} /> Gong
+          </span>
+        </span>
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
         <table className="w-full min-w-[1000px] border-collapse text-sm">
@@ -173,6 +186,9 @@ export function Dashboard({
           <tbody>
             {rows.map((e) => {
               const a = e.account;
+              const sec = Object.fromEntries(
+                e.scoring.sections.map((s) => [s.key, s.points]),
+              ) as Record<"telemetry" | "crm" | "gong", number>;
               return (
                 <tr
                   key={a.domain}
@@ -212,7 +228,12 @@ export function Dashboard({
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
-                      <MeterBar value={e.scoring.score} tone="score" className="w-20" />
+                      <SegmentedScoreBar
+                        telemetry={sec.telemetry}
+                        crm={sec.crm}
+                        gong={sec.gong}
+                        className="w-24"
+                      />
                       <span className="tabular-nums text-xs font-medium text-zinc-700 dark:text-zinc-200">
                         {e.scoring.score.toFixed(1)}
                       </span>

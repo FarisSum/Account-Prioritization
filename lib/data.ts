@@ -50,6 +50,41 @@ export async function getAccount(domain: string): Promise<CrmAccount | null> {
   }
 }
 
+export async function getAllProductTelemetry(): Promise<ProductTelemetry[]> {
+  if (!SUPABASE_READY) {
+    return MOCK_ACCOUNTS.map((a) => mockTelemetry(a.domain)).filter(
+      (t): t is ProductTelemetry => t !== null,
+    );
+  }
+  try {
+    const supabase = await client();
+    const { data, error } = await supabase.from("product_telemetry").select("*");
+    if (error) throw error;
+    return (data ?? []) as ProductTelemetry[];
+  } catch (err) {
+    console.warn("[data] Supabase read failed, falling back to mock data:", err);
+    return MOCK_ACCOUNTS.map((a) => mockTelemetry(a.domain)).filter(
+      (t): t is ProductTelemetry => t !== null,
+    );
+  }
+}
+
+export async function getAllGongSignals(): Promise<GongSignal[]> {
+  if (!SUPABASE_READY) return MOCK_ACCOUNTS.flatMap((a) => mockGongSignals(a.domain));
+  try {
+    const supabase = await client();
+    const { data, error } = await supabase
+      .from("gong_signals")
+      .select("*")
+      .order("transcript_id", { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as GongSignal[];
+  } catch (err) {
+    console.warn("[data] Supabase read failed, falling back to mock data:", err);
+    return MOCK_ACCOUNTS.flatMap((a) => mockGongSignals(a.domain));
+  }
+}
+
 export async function getProductTelemetry(domain: string): Promise<ProductTelemetry | null> {
   if (!SUPABASE_READY) return mockTelemetry(domain);
   try {

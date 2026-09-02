@@ -56,6 +56,15 @@ export function formatRelativeDays(days: number | null): string {
   return `${Math.abs(days)}d ago`;
 }
 
+export function formatMonthYear(dateISO: string | null): string {
+  if (!dateISO) return "—";
+  return new Date(`${dateISO}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
 export function formatDate(dateISO: string | null): string {
   if (!dateISO) return "—";
   return new Date(`${dateISO}T00:00:00Z`).toLocaleDateString("en-US", {

@@ -62,15 +62,20 @@ them it falls back to `lib/mock-data.ts`.
 
 ## Scoring
 
-All ranking logic is in `lib/scoring.ts`. The DB stores only raw signals; the
-0–100 priority score and its tier (Critical / High / Medium / Low) are derived
-in-app so the weighting stays visible and tunable.
+All logic is in `lib/scoring.ts`. The DB stores only raw signals; the 0–100
+**expansion-readiness** score and its tier are derived in-app. The model is
+purely additive — each rule fires for fixed points or doesn't:
 
-Default weights: revenue 35% · renewal urgency 30% · headcount momentum 20% ·
-account size 15%. Headcount momentum is U-shaped — both decline (churn risk)
-and rapid growth (expansion) raise priority. Each account's detail page
-(`/accounts/[domain]`) shows the full factor-by-factor breakdown. Retune via
-`DEFAULT_WEIGHTS` or the normalisation constants at the top of the file.
+| Section | Max | Rules |
+| --- | --- | --- |
+| Product telemetry | 40 | payment-volume YoY > 30%, transaction YoY > 30%, countries added > 2, products added > 1 — 10 pts each |
+| CRM | 15 | renewal < 180 days out, employee growth > 15%, annual revenue > $25M — 5 pts each |
+| Gong call signals | 45 | +7.5 per signal category with a positive signal detected in the last 6 months, capped at one hit per category (6 × 7.5) |
+
+Tiers: **Critical ≥ 65 · High ≥ 40 · Medium ≥ 20 · Low < 20**. Thresholds and
+rule constants live in `RULES` / `TIER_THRESHOLDS` at the top of the file. The
+full methodology + a worked example render at **`/scoring`**; every account's
+score page shows its own line-by-line breakdown.
 
 ## Layout
 
@@ -79,8 +84,10 @@ and rapid growth (expansion) raise priority. Each account's detail page
 | `app/page.tsx` | Ranked dashboard (server), renders `components/dashboard.tsx` |
 | `app/accounts/[id]/page.tsx` | Score breakdown (`[id]` = url-encoded domain) |
 | `app/accounts/[id]/signals/page.tsx` | Product telemetry + Gong call signals |
+| `app/scoring/page.tsx` | Methodology explainer + worked example |
 | `components/account-tabs.tsx` | Sub-nav between the two drill-in pages |
-| `lib/scoring.ts` | Weighted priority model (crm signals only) |
+| `components/score-breakdown.tsx` | Section/line breakdown, shared by score + scoring pages |
+| `lib/scoring.ts` | Additive priority model (telemetry + CRM + Gong) |
 | `lib/data.ts` | Supabase-or-mock data access seam |
 | `lib/types.ts` | `CrmAccount`, `ProductTelemetry`, `GongSignal` |
 | `lib/mock-data.ts` | Offline fallback dataset |

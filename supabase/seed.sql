@@ -208,3 +208,11 @@ insert into public.gong_signals (transcript_id, domain, category, sentiment, sig
 ('TRX-105','https://coralreef-hosp.com','Stakeholder','Negative','Champion departed',$q$Our main point of contact on the finance side departed and the relationship has cooled.$q$),
 ('TRX-106','https://coralreef-hosp.com','Expansion','Negative','Volume decline',$q$Occupancy is down across our properties and payment volume has fallen with it.$q$)
 on conflict (transcript_id) do nothing;
+
+-- last_detected_date: positive signals skew recent (~260-day span), others wider.
+update public.gong_signals set last_detected_date =
+  date '2026-08-25' - (
+    (('x' || substr(md5(transcript_id), 1, 8))::bit(32)::bigint)
+    % (case when sentiment = 'Positive' then 260 else 400 end)
+  )::int
+where last_detected_date is null;

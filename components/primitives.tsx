@@ -29,6 +29,48 @@ const BAR_TONES: Record<BarTone, (v: number) => string> = {
   neutral: () => "bg-zinc-400 dark:bg-zinc-500",
 };
 
+// Stacked bar showing the three score sections as a fraction of 100.
+const SECTION_COLORS = {
+  telemetry: "bg-violet-500",
+  crm: "bg-sky-500",
+  gong: "bg-amber-500",
+} as const;
+
+export const SECTION_SWATCH = SECTION_COLORS;
+
+export function SegmentedScoreBar({
+  telemetry,
+  crm,
+  gong,
+  className = "",
+}: {
+  telemetry: number;
+  crm: number;
+  gong: number;
+  className?: string;
+}) {
+  const seg = [
+    { key: "telemetry" as const, v: telemetry },
+    { key: "crm" as const, v: crm },
+    { key: "gong" as const, v: gong },
+  ];
+  return (
+    <div
+      className={`flex h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800 ${className}`}
+      role="img"
+      aria-label={`Score ${Math.round(telemetry + crm + gong)} of 100`}
+    >
+      {seg.map((s) => (
+        <div
+          key={s.key}
+          className={SECTION_COLORS[s.key]}
+          style={{ width: `${Math.max(0, Math.min(100, s.v))}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function MeterBar({
   value,
   tone = "neutral",
