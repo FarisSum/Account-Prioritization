@@ -6,12 +6,13 @@ export function AccountTabs({
   active,
 }: {
   domain: string;
-  active: "score" | "signals";
+  active: "score" | "signals" | "next-action";
 }) {
   const id = encodeURIComponent(domain);
   const tabs = [
     { key: "score", label: "Score breakdown", href: `/accounts/${id}` },
     { key: "signals", label: "Account signals", href: `/accounts/${id}/signals` },
+    { key: "next-action", label: "Next action", href: `/accounts/${id}/next-action` },
   ] as const;
 
   return (

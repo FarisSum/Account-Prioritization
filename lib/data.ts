@@ -7,10 +7,14 @@ import {
   mockGongSignals,
   mockTelemetry,
 } from "./mock-data";
-import type { CrmAccount, GongSignal, ProductTelemetry } from "./types";
+import type { CrmAccount, GongSignal, ProductTelemetry, Recommendation } from "./types";
 
 const SUPABASE_READY =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export function supabaseConfigured(): boolean {
+  return SUPABASE_READY;
+}
 
 async function client() {
   const { createSupabaseServerClient } = await import("./supabase/server");
@@ -117,4 +121,38 @@ export async function getGongSignals(domain: string): Promise<GongSignal[]> {
     console.warn("[data] Supabase read failed, falling back to mock data:", err);
     return mockGongSignals(domain);
   }
+}
+
+// --- recommendations (needs Supabase; no mock fallback) --------------------
+
+export async function getLatestRecommendation(domain: string): Promise<Recommendation | null> {
+  if (!SUPABASE_READY) return null;
+  try {
+    const supabase = await client();
+    const { data, error } = await supabase
+      .from("recommendations")
+      .select("*")
+      .eq("domain", domain)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as Recommendation) ?? null;
+  } catch (err) {
+    console.warn("[data] getLatestRecommendation failed:", err);
+    return null;
+  }
+}
+
+export async function insertRecommendation(
+  row: Omit<Recommendation, "id" | "created_at">,
+): Promise<Recommendation> {
+  const supabase = await client();
+  const { data, error } = await supabase
+    .from("recommendations")
+    .insert(row)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Recommendation;
 }

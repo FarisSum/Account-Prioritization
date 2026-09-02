@@ -65,6 +65,19 @@ export function formatMonthYear(dateISO: string | null): string {
   });
 }
 
+export function formatTimestamp(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function formatDate(dateISO: string | null): string {
   if (!dateISO) return "—";
   return new Date(`${dateISO}T00:00:00Z`).toLocaleDateString("en-US", {

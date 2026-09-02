@@ -72,3 +72,31 @@ export interface GongSignal {
   last_detected_date: string; // ISO date — when the signal was last heard on a call
   created_at: string;
 }
+
+export interface ResearchSource {
+  title: string;
+  url: string;
+  favicon?: string | null;
+}
+
+export type Confidence = "high" | "medium" | "low";
+
+// public.recommendations — "recommended next action" outputs, newest wins.
+export interface Recommendation {
+  id: string;
+  domain: string;
+  status: "completed" | "failed";
+  headline: string | null;
+  action: string | null;
+  rationale: string | null;
+  talking_points: string[];
+  supporting_context: string | null;
+  confidence: Confidence | null;
+  score_snapshot: number | null;
+  tier_snapshot: string | null;
+  research_summary: string | null;
+  research_sources: ResearchSource[];
+  model: string | null;
+  error: string | null;
+  created_at: string;
+}

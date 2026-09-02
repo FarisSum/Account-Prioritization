@@ -7,24 +7,28 @@ renewal timing and growth signals pulled from a Supabase `crm` table.
 ## Stack
 
 - Next.js 16 (App Router, Server Components) + React 19
-- Tailwind CSS v4
+- Tailwind CSS v4 (Adyen-green accent)
 - Supabase (`@supabase/supabase-js`, `@supabase/ssr`) — read-only "demo" RLS
+- Tavily Research API + Anthropic Claude (`@anthropic-ai/sdk`) — the "next action" agent
 
 ## Database
 
-Three tables, all keyed on `domain`:
+Four tables, all keyed on `domain`:
 
-- **`crm`** (`0001_init.sql`) — one row per customer account; the only source
-  the priority score reads from.
+- **`crm`** (`0001_init.sql`) — one row per customer account.
 - **`product_telemetry`** (`0002_*.sql`) — one row per account, payments-platform
   usage metrics (volume, auth rate, fraud, API, product adoption, …).
-- **`gong_signals`** (`0002_*.sql`) — many rows per account, one per
+- **`gong_signals`** (`0002_*.sql`, `0003_*.sql`) — many rows per account, one per
   call-transcript snippet (`category` ∈ Expansion / Cross-sell / Competitive /
-  Stakeholder / Renewal / Feedback, `sentiment` ∈ Positive / Neutral / Negative).
+  Stakeholder / Renewal / Feedback, `sentiment` ∈ Positive / Neutral / Negative,
+  `last_detected_date`).
+- **`recommendations`** (`0004_*.sql`) — output of the "next action" agent, newest
+  wins. `select` + `insert` allowed for the publishable key (demo posture).
 
-`product_telemetry` and `gong_signals` do **not** feed the score — they power the
-per-account **Signals** page (`/accounts/[domain]/signals`), a drill-in sibling
-to the score-breakdown page.
+All four feed the score / UI: `crm` + `product_telemetry` + recent positive
+`gong_signals` drive the priority score; the **Signals** page
+(`/accounts/[domain]/signals`) shows telemetry + call snippets; the **Next
+action** page (`/accounts/[domain]/next-action`) shows the latest recommendation.
 
 ### `crm` columns
 
@@ -56,9 +60,31 @@ paste `seed.sql` into the SQL editor.
 npm run dev   # http://localhost:3000
 ```
 
-`.env.local` holds `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-(publishable key). With them set, `lib/data.ts` reads from Supabase; without
-them it falls back to `lib/mock-data.ts`.
+`.env.local` (see `.env.local.example`):
+
+| var | purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase read/write. Without them `lib/data.ts` falls back to `lib/mock-data.ts` |
+| `TAVILY_API_KEY` | Tavily Research API — **server-only**, powers the "next action" agent |
+| `ANTHROPIC_API_KEY` | Claude synthesis for the "next action" agent — **server-only** |
+
+The two agent keys must never be `NEXT_PUBLIC_*` — the Tavily/Claude calls run
+only in `app/api/accounts/[id]/recommend/route.ts`, never in the browser.
+
+## Recommended next action agent
+
+`/accounts/[domain]/next-action` → **Generate**. The server route:
+
+1. gathers the account's `crm` + `product_telemetry` + `gong_signals` and the
+   current score breakdown (`lib/recommend.ts` → `internalBrief`);
+2. runs a Tavily **research** task on the company domain (`lib/tavily.ts`,
+   async poll, ~30–90 s);
+3. asks Claude (`claude-opus-5`, `lib/anthropic.ts`) for one JSON recommendation
+   — headline, action, rationale, talking points, context, confidence;
+4. writes the result to `recommendations` and the page shows the newest row.
+
+Failures (missing key, Tavily timeout, refusal) are saved as a `status:'failed'`
+row with the error and surfaced on the page.
 
 ## Scoring
 
@@ -84,11 +110,15 @@ score page shows its own line-by-line breakdown.
 | `app/page.tsx` | Ranked dashboard (server), renders `components/dashboard.tsx` |
 | `app/accounts/[id]/page.tsx` | Score breakdown (`[id]` = url-encoded domain) |
 | `app/accounts/[id]/signals/page.tsx` | Product telemetry + Gong call signals |
+| `app/accounts/[id]/next-action/page.tsx` | Latest recommendation + Generate button |
+| `app/api/accounts/[id]/recommend/route.ts` | POST: run the next-action pipeline |
 | `app/scoring/page.tsx` | Methodology explainer + worked example |
-| `components/account-tabs.tsx` | Sub-nav between the two drill-in pages |
+| `components/account-tabs.tsx` | Sub-nav: Score / Signals / Next action |
 | `components/score-breakdown.tsx` | Section/line breakdown, shared by score + scoring pages |
 | `lib/scoring.ts` | Additive priority model (telemetry + CRM + Gong) |
+| `lib/recommend.ts` | Next-action orchestrator (internal brief → Tavily → Claude → persist) |
+| `lib/tavily.ts` / `lib/anthropic.ts` | Tavily Research client / Claude synthesis |
 | `lib/data.ts` | Supabase-or-mock data access seam |
-| `lib/types.ts` | `CrmAccount`, `ProductTelemetry`, `GongSignal` |
+| `lib/types.ts` | `CrmAccount`, `ProductTelemetry`, `GongSignal`, `Recommendation` |
 | `lib/mock-data.ts` | Offline fallback dataset |
 | `lib/supabase/server.ts` | Server-side Supabase client |
