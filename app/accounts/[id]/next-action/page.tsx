@@ -2,9 +2,12 @@ import { notFound } from "next/navigation";
 import { AccountHeader } from "@/components/account-header";
 import { AccountTabs } from "@/components/account-tabs";
 import { GenerateRecommendation } from "@/components/generate-recommendation";
+import { PendingPoller } from "@/components/pending-poller";
 import { getAccount, getLatestRecommendation, supabaseConfigured } from "@/lib/data";
 import { formatTimestamp } from "@/lib/format";
 import type { Confidence, Recommendation } from "@/lib/types";
+
+const STALE_PENDING_MS = 4 * 60 * 1000;
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +31,15 @@ export default async function NextActionPage({
   const rec = await getLatestRecommendation(domain);
   const configured = supabaseConfigured();
 
+  const pending = rec?.status === "pending";
+  // Server component render — wall-clock read is intentional.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const stalePending =
+    pending && rec?.started_at
+      ? now - new Date(rec.started_at).getTime() > STALE_PENDING_MS
+      : false;
+
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-8">
       <AccountHeader account={account} />
@@ -44,19 +56,31 @@ export default async function NextActionPage({
         </p>
 
         <div className="mt-4">
-          {configured ? (
-            <GenerateRecommendation domain={account.domain} hasExisting={!!rec} />
-          ) : (
+          {!configured ? (
             <p className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700">
               Set <span className="font-mono">NEXT_PUBLIC_SUPABASE_*</span>,{" "}
               <span className="font-mono">TAVILY_API_KEY</span> and{" "}
               <span className="font-mono">ANTHROPIC_API_KEY</span> in{" "}
               <span className="font-mono">.env.local</span> to enable this.
             </p>
+          ) : pending && !stalePending ? (
+            <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand/40 border-t-brand" />
+              Generating… started {formatTimestamp(rec!.started_at)}. You can leave this page.
+              <PendingPoller />
+            </div>
+          ) : (
+            <GenerateRecommendation domain={account.domain} hasExisting={!!rec} />
+          )}
+          {stalePending && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              The previous run has been going for a while — it may have failed silently. Regenerating
+              starts a fresh one.
+            </p>
           )}
         </div>
 
-        {rec && <RecommendationCard rec={rec} />}
+        {rec && rec.status !== "pending" && <RecommendationCard rec={rec} />}
         {!rec && configured && (
           <p className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
             No recommendation generated yet.

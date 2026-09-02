@@ -1,19 +1,32 @@
 import Link from "next/link";
 import { Dashboard } from "@/components/dashboard";
-import { getAccounts, getAllGongSignals, getAllProductTelemetry } from "@/lib/data";
+import {
+  getAccounts,
+  getAllGongSignals,
+  getAllProductTelemetry,
+  getLatestRecommendationsByDomain,
+} from "@/lib/data";
 import { SECTION_MAX } from "@/lib/scoring";
 import { groupByDomain, indexByDomain, scoreAll } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const [accounts, telemetry, signals] = await Promise.all([
+  const [accounts, telemetry, signals, recMap] = await Promise.all([
     getAccounts(),
     getAllProductTelemetry(),
     getAllGongSignals(),
+    getLatestRecommendationsByDomain(),
   ]);
 
   const entries = scoreAll(accounts, indexByDomain(telemetry), groupByDomain(signals));
+
+  const recommendations = Object.fromEntries(
+    Array.from(recMap.entries()).map(([domain, r]) => [
+      domain,
+      { status: r.status, headline: r.headline },
+    ]),
+  );
 
   const owners = Array.from(new Set(accounts.map((a) => a.account_owner))).sort((a, b) =>
     a.localeCompare(b),
@@ -37,7 +50,7 @@ export default async function Page() {
         </div>
       </header>
 
-      <Dashboard entries={entries} owners={owners} />
+      <Dashboard entries={entries} owners={owners} recommendations={recommendations} />
     </main>
   );
 }

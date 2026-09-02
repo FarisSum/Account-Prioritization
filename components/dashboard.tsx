@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { SECTION_SWATCH, SegmentedScoreBar, TierBadge } from "@/components/primitives";
 import { daysUntil, formatCompactCurrency, formatPercent, formatRelativeDays } from "@/lib/format";
 import type { PriorityTier } from "@/lib/scoring";
+import type { Recommendation } from "@/lib/types";
 import type { ScoredAccount } from "@/lib/view";
 
 type TierFilter = "All" | PriorityTier;
@@ -54,9 +55,11 @@ function domainLabel(domain: string): string {
 export function Dashboard({
   entries,
   owners,
+  recommendations,
 }: {
   entries: ScoredAccount[];
   owners: string[];
+  recommendations: Record<string, Pick<Recommendation, "status" | "headline">>;
 }) {
   const [query, setQuery] = useState("");
   const [tier, setTier] = useState<TierFilter>("All");
@@ -189,10 +192,22 @@ export function Dashboard({
               const sec = Object.fromEntries(
                 e.scoring.sections.map((s) => [s.key, s.points]),
               ) as Record<"telemetry" | "crm" | "gong", number>;
+              const rec = recommendations[a.domain];
+              const naHref = `/accounts/${encodeURIComponent(a.domain)}/next-action`;
+              const naText =
+                rec?.status === "completed" && rec.headline
+                  ? rec.headline
+                  : rec?.status === "pending"
+                    ? "Generating next action…"
+                    : rec?.status === "failed"
+                      ? "Next action — last run failed"
+                      : null;
               return (
+                <Fragment key={a.domain}>
                 <tr
-                  key={a.domain}
-                  className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 dark:border-zinc-800/60 dark:hover:bg-zinc-900/50"
+                  className={`hover:bg-zinc-50 dark:hover:bg-zinc-900/50 ${
+                    naText ? "" : "border-b border-zinc-100 dark:border-zinc-800/60"
+                  } last:border-0`}
                 >
                   <td className="px-3 py-2.5 tabular-nums text-zinc-400">{e.priorityRank}</td>
                   <td className="px-3 py-2.5">
@@ -245,12 +260,44 @@ export function Dashboard({
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
                     <Link
                       href={`/accounts/${encodeURIComponent(a.domain)}/signals`}
-                      className="text-xs font-medium text-brand underline-offset-2 hover:underline"
+                      className="block text-xs font-medium text-brand underline-offset-2 hover:underline"
                     >
                       Signals →
                     </Link>
+                    <Link
+                      href={naHref}
+                      className="mt-1 block text-xs font-medium text-brand underline-offset-2 hover:underline"
+                    >
+                      Next action →
+                    </Link>
                   </td>
                 </tr>
+                {naText && (
+                  <tr className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60">
+                    <td />
+                    <td colSpan={10} className="px-3 pb-2.5 pt-0">
+                      <Link
+                        href={naHref}
+                        className="group inline-flex items-baseline gap-1.5 text-xs text-zinc-600 hover:text-brand dark:text-zinc-400"
+                      >
+                        <span className="font-semibold uppercase tracking-wide text-brand">
+                          Next action
+                        </span>
+                        <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                        <span
+                          className={
+                            rec?.status === "completed"
+                              ? "text-zinc-700 group-hover:text-brand dark:text-zinc-200"
+                              : "italic text-zinc-400"
+                          }
+                        >
+                          {naText}
+                        </span>
+                      </Link>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
             {rows.length === 0 && (

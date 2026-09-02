@@ -81,11 +81,13 @@ export interface ResearchSource {
 
 export type Confidence = "high" | "medium" | "low";
 
+export type RecommendationStatus = "pending" | "completed" | "failed";
+
 // public.recommendations — "recommended next action" outputs, newest wins.
 export interface Recommendation {
   id: string;
   domain: string;
-  status: "completed" | "failed";
+  status: RecommendationStatus;
   headline: string | null;
   action: string | null;
   rationale: string | null;
@@ -98,5 +100,6 @@ export interface Recommendation {
   research_sources: ResearchSource[];
   model: string | null;
   error: string | null;
+  started_at: string | null;
   created_at: string;
 }

@@ -73,18 +73,26 @@ only in `app/api/accounts/[id]/recommend/route.ts`, never in the browser.
 
 ## Recommended next action agent
 
-`/accounts/[domain]/next-action` → **Generate**. The server route:
+`/accounts/[domain]/next-action` → **Generate**. The POST route:
 
 1. gathers the account's `crm` + `product_telemetry` + `gong_signals` and the
-   current score breakdown (`lib/recommend.ts` → `internalBrief`);
-2. runs a Tavily **research** task on the company domain (`lib/tavily.ts`,
-   async poll, ~30–90 s);
-3. asks Claude (`claude-opus-5`, `lib/anthropic.ts`) for one JSON recommendation
-   — headline, action, rationale, talking points, context, confidence;
-4. writes the result to `recommendations` and the page shows the newest row.
+   current score breakdown (`lib/recommend.ts` → `internalBrief`), inserts a
+   `status:'pending'` row, and returns **202 immediately**;
+2. in a Next.js `after()` callback (survives client navigation / tab close) it
+   runs a Tavily **research** task on the domain (`lib/tavily.ts`, async poll,
+   ~30–120 s), then asks Claude (`claude-opus-5`, `lib/anthropic.ts`) for one
+   JSON recommendation — headline, action, rationale, talking points, context,
+   confidence — and **updates** the pending row.
 
-Failures (missing key, Tavily timeout, refusal) are saved as a `status:'failed'`
-row with the error and surfaced on the page.
+The next-action page shows a "Generating…" state + a light poller while pending;
+the dashboard shows the latest headline as a full-width sub-row under each
+account (`getLatestRecommendationsByDomain`). Failures (missing key, Tavily
+timeout, refusal) become a `status:'failed'` row with the error, surfaced on
+both pages.
+
+`ANTHROPIC_WORKSPACE_ID` (optional) — set to a `wrkspc_…` id if your
+`ANTHROPIC_API_KEY` is workspace-scoped / identity-linked; the client sends the
+`anthropic-workspace-id` header only when it's present.
 
 ## Scoring
 

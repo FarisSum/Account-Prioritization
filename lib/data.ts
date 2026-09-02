@@ -144,6 +144,27 @@ export async function getLatestRecommendation(domain: string): Promise<Recommend
   }
 }
 
+/** Newest recommendation per domain — for the dashboard headline row. */
+export async function getLatestRecommendationsByDomain(): Promise<Map<string, Recommendation>> {
+  const out = new Map<string, Recommendation>();
+  if (!SUPABASE_READY) return out;
+  try {
+    const supabase = await client();
+    const { data, error } = await supabase
+      .from("recommendations")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    for (const row of (data ?? []) as Recommendation[]) {
+      if (!out.has(row.domain)) out.set(row.domain, row); // first seen = newest
+    }
+    return out;
+  } catch (err) {
+    console.warn("[data] getLatestRecommendationsByDomain failed:", err);
+    return out;
+  }
+}
+
 export async function insertRecommendation(
   row: Omit<Recommendation, "id" | "created_at">,
 ): Promise<Recommendation> {
@@ -155,4 +176,13 @@ export async function insertRecommendation(
     .single();
   if (error) throw error;
   return data as Recommendation;
+}
+
+export async function updateRecommendation(
+  id: string,
+  patch: Partial<Omit<Recommendation, "id" | "domain" | "created_at">>,
+): Promise<void> {
+  const supabase = await client();
+  const { error } = await supabase.from("recommendations").update(patch).eq("id", id);
+  if (error) throw error;
 }

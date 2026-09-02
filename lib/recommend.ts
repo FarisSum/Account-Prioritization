@@ -1,12 +1,19 @@
-// Orchestrates the "recommended next action": gather internal signals →
-// Tavily research → Claude synthesis → persist. Server-only.
+// Orchestrates the "recommended next action". The route creates a `pending` row
+// synchronously, then runs the slow part (Tavily research + Claude synthesis) in
+// a Next.js after() callback that updates the row — so it survives navigation.
 
 import { synthesizeRecommendation, SYNTHESIS_MODEL } from "./anthropic";
-import { getAccount, getGongSignals, getProductTelemetry, insertRecommendation } from "./data";
+import {
+  getAccount,
+  getGongSignals,
+  getProductTelemetry,
+  insertRecommendation,
+  updateRecommendation,
+} from "./data";
 import { formatCompactCurrency, formatDate } from "./format";
 import { recentPositivesByCategory, scoreAccount } from "./scoring";
 import { researchCompany } from "./tavily";
-import type { CrmAccount, GongSignal, ProductTelemetry, Recommendation } from "./types";
+import type { CrmAccount, GongSignal, ProductTelemetry } from "./types";
 
 const MAX_RESEARCH_CHARS = 6_000;
 
@@ -79,7 +86,10 @@ function internalBrief(
   return { text: lines.join("\n"), scoreSnapshot: scoring.score, tierSnapshot: scoring.tier };
 }
 
-export async function generateRecommendation(domain: string): Promise<Recommendation> {
+/** Fast: compute the internal brief and insert a `pending` row. Returns row id + brief. */
+export async function createPendingRecommendation(
+  domain: string,
+): Promise<{ id: string; brief: string }> {
   const account = await getAccount(domain);
   if (!account) throw new Error(`No account for ${domain}`);
 
@@ -87,12 +97,11 @@ export async function generateRecommendation(domain: string): Promise<Recommenda
     getProductTelemetry(domain),
     getGongSignals(domain),
   ]);
-
   const brief = internalBrief(account, telemetry, signals);
 
-  const base: Omit<Recommendation, "id" | "created_at"> = {
+  const row = await insertRecommendation({
     domain,
-    status: "failed",
+    status: "pending",
     headline: null,
     action: null,
     rationale: null,
@@ -105,14 +114,19 @@ export async function generateRecommendation(domain: string): Promise<Recommenda
     research_sources: [],
     model: SYNTHESIS_MODEL,
     error: null,
-  };
+    started_at: new Date().toISOString(),
+  });
 
+  return { id: row.id, brief: brief.text };
+}
+
+/** Slow: Tavily research + Claude synthesis, then update the pending row. */
+export async function runRecommendation(id: string, domain: string, brief: string): Promise<void> {
   try {
-    const research = await researchCompany({
-      companyName: account.company_name,
-      domain: account.domain,
-    });
+    const account = await getAccount(domain);
+    const companyName = account?.company_name ?? domain;
 
+    const research = await researchCompany({ companyName, domain });
     const researchSummary = research.content.slice(0, MAX_RESEARCH_CHARS);
     const sourceList = research.sources
       .slice(0, 12)
@@ -121,7 +135,7 @@ export async function generateRecommendation(domain: string): Promise<Recommenda
 
     const prompt = [
       "## INTERNAL SIGNALS",
-      brief.text,
+      brief,
       "\n## EXTERNAL RESEARCH (Tavily)",
       researchSummary || "(no research returned)",
       sourceList ? `\n### Sources\n${sourceList}` : "",
@@ -131,8 +145,7 @@ export async function generateRecommendation(domain: string): Promise<Recommenda
 
     const draft = await synthesizeRecommendation(prompt);
 
-    return await insertRecommendation({
-      ...base,
+    await updateRecommendation(id, {
       status: "completed",
       headline: draft.headline,
       action: draft.action,
@@ -142,9 +155,14 @@ export async function generateRecommendation(domain: string): Promise<Recommenda
       confidence: draft.confidence,
       research_summary: researchSummary,
       research_sources: research.sources.slice(0, 12),
+      error: null,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return await insertRecommendation({ ...base, status: "failed", error: message });
+    try {
+      await updateRecommendation(id, { status: "failed", error: message });
+    } catch (e) {
+      console.error("[recommend] failed to record failure for", id, e);
+    }
   }
 }

@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { supabaseConfigured } from "@/lib/data";
-import { generateRecommendation } from "@/lib/recommend";
+import { createPendingRecommendation, runRecommendation } from "@/lib/recommend";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120; // research + synthesis can take ~1 min
+export const maxDuration = 120; // research + synthesis run in after()
 
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -17,11 +17,14 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   }
 
   try {
-    const recommendation = await generateRecommendation(domain);
-    return NextResponse.json(
-      { ok: recommendation.status === "completed", recommendation },
-      { status: recommendation.status === "completed" ? 200 : 502 },
-    );
+    const { id: recId, brief } = await createPendingRecommendation(domain);
+
+    // Runs after the response is sent — survives client navigation / tab close.
+    after(async () => {
+      await runRecommendation(recId, domain, brief);
+    });
+
+    return NextResponse.json({ ok: true, status: "pending", id: recId }, { status: 202 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
