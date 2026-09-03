@@ -40,8 +40,8 @@ One row per customer account:
 | `company_name`, `industry`, `location`, `country` | descriptive |
 | `lead_type` | `CHECK (lead_type = 'Customer')` — customers only |
 | `account_owner` | the Account Manager |
-| `annual_revenue` | USD (bigint) — the customer's own revenue; the scoring CRM rule reads this |
-| `adyen_arr` | USD (bigint) — Adyen's ARR *from* this account; the dashboard "ARR to Adyen" column + summary cards read this |
+| `annual_revenue` | USD (bigint) — the customer's own revenue (context only; not scored) |
+| `adyen_arr` | USD (bigint) — Adyen's ARR *from* this account; dashboard "ARR to Adyen" column + summary cards, and the scoring CRM rule |
 | `num_years_as_customer` | numeric(3,1) — tenure as an Adyen customer; dashboard "Tenure" column |
 | `contract_renewal_date` | date |
 | `employee_growth` | YoY %, may be negative |
@@ -105,8 +105,8 @@ purely additive — each rule fires for fixed points or doesn't:
 | Section | Max | Rules |
 | --- | --- | --- |
 | Product usage | 40 | payment-volume YoY > 30%, transaction YoY > 30%, countries added > 2, products added > 1 — 10 pts each |
-| CRM | 15 | renewal < 180 days out, employee growth > 15%, annual revenue > $25M — 5 pts each |
-| Gong call signals | 45 | +7.5 per signal category with a positive signal detected in the last 6 months, capped at one hit per category (6 × 7.5) |
+| CRM | 18 | renewal < 180 days out (5), employee growth > 15% (5), Adyen ARR > $10M (8) |
+| Gong call signals | 42 | +7 per signal category with a positive signal detected in the last 6 months, capped at one hit per category (6 × 7) |
 
 Tiers: **Critical ≥ 65 · High ≥ 40 · Medium ≥ 20 · Low < 20**. Thresholds and
 rule constants live in `RULES` / `TIER_THRESHOLDS` at the top of the file. The

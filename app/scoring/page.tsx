@@ -30,7 +30,7 @@ const TELEMETRY_RULES = [
 const CRM_RULES = [
   { rule: "Contract renewal approaching", threshold: `< ${c.renewalWithinDays} days out`, points: c.pointsEach },
   { rule: "Employee growth", threshold: `> ${c.employeeGrowthPct}%`, points: c.pointsEach },
-  { rule: "Annual revenue", threshold: `> $${(c.annualRevenue / 1_000_000).toLocaleString("en-US")}M`, points: c.pointsEach },
+  { rule: "Adyen ARR from the account", threshold: `> $${(c.adyenArr / 1_000_000).toLocaleString("en-US")}M`, points: c.arrPoints },
 ];
 
 export default async function ScoringPage() {
@@ -102,7 +102,8 @@ export default async function ScoringPage() {
       {/* CRM */}
       <Section title={`CRM — ${SECTION_MAX.crm} points`}>
         <p>
-          Three checks from the <code>crm</code> record, {c.pointsEach} points each.
+          Three checks from the <code>crm</code> record: renewal timing and employee growth are{" "}
+          {c.pointsEach} points each; Adyen ARR is {c.arrPoints}.
         </p>
         <RuleTable rows={CRM_RULES} />
       </Section>

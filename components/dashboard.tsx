@@ -289,8 +289,14 @@ export function Dashboard({
                   </td>
                   <td className="px-3 py-2.5 text-right whitespace-nowrap">
                     <Link
-                      href={`/accounts/${encodeURIComponent(a.domain)}/signals`}
+                      href={`/accounts/${encodeURIComponent(a.domain)}`}
                       className="block text-xs font-medium text-brand underline-offset-2 hover:underline"
+                    >
+                      Score breakdown →
+                    </Link>
+                    <Link
+                      href={`/accounts/${encodeURIComponent(a.domain)}/signals`}
+                      className="mt-1 block text-xs font-medium text-brand underline-offset-2 hover:underline"
                     >
                       Signals →
                     </Link>

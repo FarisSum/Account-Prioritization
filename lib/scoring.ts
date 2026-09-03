@@ -7,8 +7,8 @@
 // explain (see /scoring) and easy to retune here.
 //
 //   Product usage      40 pts  (4 rules x 10)
-//   CRM                15 pts  (3 rules x 5)
-//   Gong call signals  45 pts  (6 categories x 7.5)
+//   CRM                18 pts  (renewal 5, employee growth 5, Adyen ARR 8)
+//   Gong call signals  42 pts  (6 categories x 7)
 //
 // Total 100. Tiers: Critical >= 65, High >= 40, Medium >= 20, else Low.
 
@@ -40,15 +40,16 @@ export const RULES = {
   crm: {
     renewalWithinDays: 180, // < 180 days out (or overdue)
     employeeGrowthPct: 15, // > 15%
-    annualRevenue: 25_000_000, // > $25M
-    pointsEach: 5,
+    adyenArr: 10_000_000, // Adyen ARR from the account > $10M (materially valuable book)
+    pointsEach: 5, // renewal + employee growth
+    arrPoints: 8, // Adyen ARR rule
   },
   gong: {
-    pointsPerCategory: 7.5, // one hit per category, capped
+    pointsPerCategory: 7, // one hit per category, capped
   },
 } as const;
 
-export const SECTION_MAX = { telemetry: 40, crm: 15, gong: 45 } as const;
+export const SECTION_MAX = { telemetry: 40, crm: 18, gong: 42 } as const;
 
 export const TIER_THRESHOLDS: [PriorityTier, number][] = [
   ["Critical", 65],
@@ -162,7 +163,7 @@ function crmSection(a: CrmAccount, asOf: Date): ScoreSection {
   const days = daysUntil(a.contract_renewal_date, asOf);
   const renewalMet = days !== null && days < RULES.crm.renewalWithinDays;
   const growthMet = a.employee_growth > RULES.crm.employeeGrowthPct;
-  const revenueMet = a.annual_revenue > RULES.crm.annualRevenue;
+  const arrMet = a.adyen_arr > RULES.crm.adyenArr;
 
   const lines: ScoreLine[] = [
     {
@@ -183,11 +184,11 @@ function crmSection(a: CrmAccount, asOf: Date): ScoreSection {
       points: gp(growthMet, P),
     },
     {
-      label: "Annual revenue",
-      detail: `$${(a.annual_revenue / 1_000_000).toLocaleString("en-US")}M (need > $${(RULES.crm.annualRevenue / 1_000_000).toLocaleString("en-US")}M)`,
-      max: P,
-      met: revenueMet,
-      points: gp(revenueMet, P),
+      label: "Adyen ARR",
+      detail: `$${(a.adyen_arr / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 1 })}M (need > $${(RULES.crm.adyenArr / 1_000_000).toLocaleString("en-US")}M)`,
+      max: RULES.crm.arrPoints,
+      met: arrMet,
+      points: gp(arrMet, RULES.crm.arrPoints),
     },
   ];
 
