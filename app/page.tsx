@@ -41,7 +41,7 @@ export default async function Page() {
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
             Your customer book ranked by an expansion-readiness score out of 100 — product
-            telemetry {SECTION_MAX.telemetry}, CRM {SECTION_MAX.crm}, Gong call signals{" "}
+            usage {SECTION_MAX.telemetry}, CRM {SECTION_MAX.crm}, Gong call signals{" "}
             {SECTION_MAX.gong}.{" "}
             <Link href="/scoring" className="font-medium text-brand hover:underline">
               How scoring works →

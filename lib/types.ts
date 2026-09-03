@@ -9,7 +9,8 @@ export interface CrmAccount {
   account_owner: string; // the Account Manager
   industry: string | null;
   employee_count: number;
-  annual_revenue: number; // USD
+  annual_revenue: number; // USD — the customer company's own revenue (scoring input)
+  adyen_arr: number; // USD — Adyen's annual revenue FROM this account
   contract_renewal_date: string | null; // ISO date
   location: string | null;
   country: string | null;

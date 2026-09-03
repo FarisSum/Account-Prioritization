@@ -216,3 +216,25 @@ update public.gong_signals set last_detected_date =
     % (case when sentiment = 'Positive' then 260 else 400 end)
   )::int
 where last_detected_date is null;
+
+-- ---------------------------------------------------------------------------
+-- crm.adyen_arr — Adyen's annual revenue from each account = processed volume
+-- x a blended take rate (~0.22%-1.3%, lower for very large merchants).
+-- Runs after product_telemetry is populated.
+-- ---------------------------------------------------------------------------
+update public.crm c set adyen_arr = sub.arr
+from (
+  select t.domain,
+    greatest(60000, round(
+      (t.payment_volume_monthly::numeric * 12)
+      * (
+          (0.0024 + 0.0100 * ((('x' || substr(md5(t.domain), 25, 8))::bit(32)::bigint % 1000)::numeric / 1000.0))
+          - case when cr.annual_revenue > 200000000 then 0.0016
+                 when cr.annual_revenue > 80000000  then 0.0008
+                 else 0 end
+        )
+    )::bigint) as arr
+  from public.product_telemetry t
+  join public.crm cr on cr.domain = t.domain
+) sub
+where c.domain = sub.domain;

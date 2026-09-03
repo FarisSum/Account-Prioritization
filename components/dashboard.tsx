@@ -15,7 +15,7 @@ const TIER_FILTERS: TierFilter[] = ["All", "Critical", "High", "Medium", "Low"];
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "priority", label: "Priority score" },
-  { key: "revenue", label: "Annual revenue" },
+  { key: "revenue", label: "ARR to Adyen" },
   { key: "renewal", label: "Renewal date" },
   { key: "growth", label: "Headcount growth" },
   { key: "employees", label: "Employee count" },
@@ -27,7 +27,7 @@ function sortValue(entry: ScoredAccount, key: SortKey): number {
     case "priority":
       return entry.scoring.score;
     case "revenue":
-      return a.annual_revenue;
+      return a.adyen_arr;
     case "renewal": {
       const d = daysUntil(a.contract_renewal_date);
       return d === null ? Number.POSITIVE_INFINITY : d;
@@ -158,7 +158,7 @@ export function Dashboard({
         </span>
         <span className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.telemetry}`} /> Telemetry
+            <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.telemetry}`} /> Usage
           </span>
           <span className="flex items-center gap-1.5">
             <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH.crm}`} /> CRM
@@ -177,7 +177,7 @@ export function Dashboard({
               <th className="px-3 py-2.5 font-medium">Account</th>
               <th className="px-3 py-2.5 font-medium">Owner</th>
               <th className="px-3 py-2.5 font-medium">Industry</th>
-              <th className="px-3 py-2.5 font-medium">Revenue</th>
+              <th className="px-3 py-2.5 font-medium">ARR to Adyen</th>
               <th className="px-3 py-2.5 font-medium">Renewal</th>
               <th className="px-3 py-2.5 font-medium">Growth</th>
               <th className="px-3 py-2.5 font-medium">Employees</th>
@@ -222,7 +222,7 @@ export function Dashboard({
                   <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">{a.account_owner}</td>
                   <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">{a.industry ?? "—"}</td>
                   <td className="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-300">
-                    {formatCompactCurrency(a.annual_revenue)}
+                    {formatCompactCurrency(a.adyen_arr)}
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-300">
                     {formatRelativeDays(daysUntil(a.contract_renewal_date))}
@@ -315,18 +315,22 @@ export function Dashboard({
 }
 
 function SummaryCards({ entries }: { entries: ScoredAccount[] }) {
-  const totalRevenue = entries.reduce((s, e) => s + e.account.annual_revenue, 0);
+  const totalAdyenArr = entries.reduce((s, e) => s + e.account.adyen_arr, 0);
   const critical = entries.filter((e) => e.scoring.tier === "Critical").length;
   const high = entries.filter((e) => e.scoring.tier === "High").length;
-  const attentionRevenue = entries
+  const attentionAdyenArr = entries
     .filter((e) => e.scoring.tier === "Critical" || e.scoring.tier === "High")
-    .reduce((s, e) => s + e.account.annual_revenue, 0);
+    .reduce((s, e) => s + e.account.adyen_arr, 0);
 
-  const cards = [
+  const cards: { label: string; value: string; note?: string }[] = [
     { label: "Accounts", value: String(entries.length) },
-    { label: "Total ARR", value: formatCompactCurrency(totalRevenue) },
+    { label: "Total ARR to Adyen", value: formatCompactCurrency(totalAdyenArr) },
     { label: "Critical / High", value: `${critical} / ${high}` },
-    { label: "ARR needing attention", value: formatCompactCurrency(attentionRevenue) },
+    {
+      label: "Adyen ARR needing attention",
+      value: formatCompactCurrency(attentionAdyenArr),
+      note: "Sum of Adyen ARR for accounts scored Critical or High.",
+    },
   ];
 
   return (
@@ -340,6 +344,11 @@ function SummaryCards({ entries }: { entries: ScoredAccount[] }) {
           <div className="mt-1 text-xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
             {c.value}
           </div>
+          {c.note && (
+            <div className="mt-1 text-[11px] leading-tight text-zinc-400 dark:text-zinc-500">
+              {c.note}
+            </div>
+          )}
         </div>
       ))}
     </div>

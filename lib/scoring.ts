@@ -6,7 +6,7 @@
 // fires for a fixed number of points or it doesn't, so the math is easy to
 // explain (see /scoring) and easy to retune here.
 //
-//   Product telemetry  40 pts  (4 rules x 10)
+//   Product usage      40 pts  (4 rules x 10)
 //   CRM                15 pts  (3 rules x 5)
 //   Gong call signals  45 pts  (6 categories x 7.5)
 //
@@ -149,7 +149,7 @@ function telemetrySection(t: ProductTelemetry | null): ScoreSection {
 
   return {
     key: "telemetry",
-    label: "Product telemetry",
+    label: "Product usage",
     max: SECTION_MAX.telemetry,
     points: lines.reduce((s, l) => s + l.points, 0),
     lines,

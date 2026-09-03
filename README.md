@@ -27,7 +27,7 @@ Four tables, all keyed on `domain`:
 
 All four feed the score / UI: `crm` + `product_telemetry` + recent positive
 `gong_signals` drive the priority score; the **Signals** page
-(`/accounts/[domain]/signals`) shows telemetry + call snippets; the **Next
+(`/accounts/[domain]/signals`) shows product usage + call snippets; the **Next
 action** page (`/accounts/[domain]/next-action`) shows the latest recommendation.
 
 ### `crm` columns
@@ -40,14 +40,15 @@ One row per customer account:
 | `company_name`, `industry`, `location`, `country` | descriptive |
 | `lead_type` | `CHECK (lead_type = 'Customer')` — customers only |
 | `account_owner` | the Account Manager |
-| `annual_revenue` | USD (bigint) |
+| `annual_revenue` | USD (bigint) — the customer's own revenue; the scoring CRM rule reads this |
+| `adyen_arr` | USD (bigint) — Adyen's ARR *from* this account; the dashboard "ARR to Adyen" column + summary cards read this |
 | `contract_renewal_date` | date |
 | `employee_growth` | YoY %, may be negative |
 | `employee_count` | integer |
 
-Schema + `supabase/seed.sql` (20 sample customers, matching telemetry, ~5 call
+Schema + `supabase/seed.sql` (20 sample customers, matching usage rows, ~5 call
 signals each) are already applied to project `omcmtkmhcxucllarookv`. RLS allows
-anon `SELECT` only. Telemetry values are derived deterministically from each
+anon `SELECT` only. Usage values are derived deterministically from each
 `crm` row (`md5(domain)` is the only randomness) so they track account size and
 growth.
 
@@ -102,7 +103,7 @@ purely additive — each rule fires for fixed points or doesn't:
 
 | Section | Max | Rules |
 | --- | --- | --- |
-| Product telemetry | 40 | payment-volume YoY > 30%, transaction YoY > 30%, countries added > 2, products added > 1 — 10 pts each |
+| Product usage | 40 | payment-volume YoY > 30%, transaction YoY > 30%, countries added > 2, products added > 1 — 10 pts each |
 | CRM | 15 | renewal < 180 days out, employee growth > 15%, annual revenue > $25M — 5 pts each |
 | Gong call signals | 45 | +7.5 per signal category with a positive signal detected in the last 6 months, capped at one hit per category (6 × 7.5) |
 
@@ -117,13 +118,13 @@ score page shows its own line-by-line breakdown.
 | --- | --- |
 | `app/page.tsx` | Ranked dashboard (server), renders `components/dashboard.tsx` |
 | `app/accounts/[id]/page.tsx` | Score breakdown (`[id]` = url-encoded domain) |
-| `app/accounts/[id]/signals/page.tsx` | Product telemetry + Gong call signals |
+| `app/accounts/[id]/signals/page.tsx` | Product usage + Gong call signals |
 | `app/accounts/[id]/next-action/page.tsx` | Latest recommendation + Generate button |
 | `app/api/accounts/[id]/recommend/route.ts` | POST: run the next-action pipeline |
 | `app/scoring/page.tsx` | Methodology explainer + worked example |
 | `components/account-tabs.tsx` | Sub-nav: Score / Signals / Next action |
 | `components/score-breakdown.tsx` | Section/line breakdown, shared by score + scoring pages |
-| `lib/scoring.ts` | Additive priority model (telemetry + CRM + Gong) |
+| `lib/scoring.ts` | Additive priority model (usage + CRM + Gong) |
 | `lib/recommend.ts` | Next-action orchestrator (internal brief → Tavily → Claude → persist) |
 | `lib/tavily.ts` / `lib/anthropic.ts` | Tavily Research client / Claude synthesis |
 | `lib/data.ts` | Supabase-or-mock data access seam |

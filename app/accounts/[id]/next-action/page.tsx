@@ -50,7 +50,7 @@ export default async function NextActionPage({
           Recommended next action
         </h2>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Combines this account&rsquo;s CRM record, product telemetry and recent Gong signals with
+          Combines this account&rsquo;s CRM record, product usage and recent Gong signals with
           fresh Tavily research on <span className="font-mono">{account.domain.replace(/^https?:\/\//, "")}</span>,
           then asks Claude for the single highest-value move.
         </p>

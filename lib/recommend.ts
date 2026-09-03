@@ -29,7 +29,8 @@ function internalBrief(
   lines.push(`- Company: ${account.company_name} (${account.domain})`);
   lines.push(`- Industry: ${account.industry ?? "—"} · Owner: ${account.account_owner}`);
   lines.push(`- Location: ${account.location ?? "—"}, ${account.country ?? "—"}`);
-  lines.push(`- Annual revenue: ${formatCompactCurrency(account.annual_revenue)}`);
+  lines.push(`- Customer annual revenue: ${formatCompactCurrency(account.annual_revenue)}`);
+  lines.push(`- Adyen ARR from this account: ${formatCompactCurrency(account.adyen_arr)}`);
   lines.push(`- Employee count: ${account.employee_count} (growth ${account.employee_growth}% YoY)`);
   lines.push(`- Contract renewal: ${formatDate(account.contract_renewal_date)}`);
 
@@ -42,7 +43,7 @@ function internalBrief(
   }
 
   if (telemetry) {
-    lines.push(`\n# Product telemetry`);
+    lines.push(`\n# Product usage`);
     lines.push(
       `- Monthly volume ${formatCompactCurrency(telemetry.payment_volume_monthly ?? 0)} ` +
         `(${telemetry.payment_volume_yoy_growth ?? 0}% YoY), ` +

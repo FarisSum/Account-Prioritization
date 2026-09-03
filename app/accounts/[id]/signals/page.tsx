@@ -74,9 +74,9 @@ export default async function AccountSignalsPage({
       <AccountHeader account={account} />
       <AccountTabs domain={account.domain} active="signals" />
 
-      {/* ---------------- Product telemetry ---------------- */}
+      {/* ---------------- Product usage ---------------- */}
       <section className="mt-6">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Product telemetry</h2>
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Product usage</h2>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Payments-platform usage. Four YoY-growth thresholds here are worth{" "}
           {RULES.telemetry.pointsEach} points each ({SECTION_MAX.telemetry} of the score) — see{" "}
@@ -88,7 +88,7 @@ export default async function AccountSignalsPage({
 
         {!telemetry ? (
           <p className="mt-4 rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700">
-            No telemetry on file for this account.
+            No usage data on file for this account.
           </p>
         ) : (
           <div className="mt-4 space-y-5">

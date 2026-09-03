@@ -69,7 +69,7 @@ export default async function ScoringPage() {
       <div className="mt-5 grid grid-cols-3 gap-3">
         {(
           [
-            ["Product telemetry", SECTION_MAX.telemetry, SECTION_SWATCH.telemetry],
+            ["Product usage", SECTION_MAX.telemetry, SECTION_SWATCH.telemetry],
             ["CRM", SECTION_MAX.crm, SECTION_SWATCH.crm],
             ["Gong call signals", SECTION_MAX.gong, SECTION_SWATCH.gong],
           ] as const
@@ -89,11 +89,12 @@ export default async function ScoringPage() {
         ))}
       </div>
 
-      {/* Product telemetry */}
-      <Section title={`Product telemetry — ${SECTION_MAX.telemetry} points`}>
+      {/* Product usage */}
+      <Section title={`Product usage — ${SECTION_MAX.telemetry} points`}>
         <p>
-          Four year-over-year growth checks from <code>product_telemetry</code>, {t.pointsEach} points
-          each. These reward accounts that are actively scaling on the payments platform.
+          Four year-over-year growth checks from the <code>product_telemetry</code> table,{" "}
+          {t.pointsEach} points each. These reward accounts that are actively scaling on the payments
+          platform.
         </p>
         <RuleTable rows={TELEMETRY_RULES} />
       </Section>

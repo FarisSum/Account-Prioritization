@@ -46,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <footer className="border-t border-zinc-200 dark:border-zinc-800">
         <div className="mx-auto w-full max-w-6xl px-5 py-6 text-xs text-zinc-500 dark:text-zinc-400">
           Internal tool for Adyen account managers. Priority scores are computed in-app from CRM,
-          product telemetry and Gong call signals.
+          product usage and Gong call signals.
         </div>
       </footer>
     </div>
