@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { SECTION_SWATCH, SegmentedScoreBar, TierBadge } from "@/components/primitives";
+import { AgentIcon, SECTION_SWATCH, SegmentedScoreBar, TierBadge } from "@/components/primitives";
 import { daysUntil, formatCompactCurrency, formatPercent, formatRelativeDays } from "@/lib/format";
-import type { PriorityTier } from "@/lib/scoring";
+import { SECTION_MAX, type PriorityTier } from "@/lib/scoring";
 import type { Recommendation } from "@/lib/types";
 import type { ScoredAccount } from "@/lib/view";
 
@@ -262,17 +262,7 @@ export function Dashboard({
                     {a.employee_count.toLocaleString("en-US")}
                   </td>
                   <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <SegmentedScoreBar
-                        telemetry={sec.telemetry}
-                        crm={sec.crm}
-                        gong={sec.gong}
-                        className="w-24"
-                      />
-                      <span className="tabular-nums text-xs font-medium text-zinc-700 dark:text-zinc-200">
-                        {e.scoring.score.toFixed(1)}
-                      </span>
-                    </div>
+                    <ScoreCell sec={sec} score={e.scoring.score} />
                   </td>
                   <td className="px-3 py-2.5">
                     <TierBadge tier={e.scoring.tier} />
@@ -292,8 +282,9 @@ export function Dashboard({
                     </Link>
                     <Link
                       href={naHref}
-                      className="mt-1 block text-xs font-medium text-brand underline-offset-2 hover:underline"
+                      className="mt-1 flex items-center justify-end gap-1 text-xs font-medium text-brand underline-offset-2 hover:underline"
                     >
+                      <AgentIcon className="h-3 w-3" />
                       Next action →
                     </Link>
                   </td>
@@ -304,9 +295,10 @@ export function Dashboard({
                     <td colSpan={11} className="px-3 pb-2.5 pt-0">
                       <Link
                         href={naHref}
-                        className="group inline-flex items-baseline gap-1.5 text-xs text-zinc-600 hover:text-brand dark:text-zinc-400"
+                        className="group inline-flex items-center gap-1.5 text-xs text-zinc-600 hover:text-brand dark:text-zinc-400"
                       >
-                        <span className="font-semibold uppercase tracking-wide text-brand">
+                        <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-brand">
+                          <AgentIcon className="h-3 w-3" />
                           Next action
                         </span>
                         <span className="text-zinc-300 dark:text-zinc-600">·</span>
@@ -335,6 +327,48 @@ export function Dashboard({
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+const SCORE_SECTIONS = [
+  { key: "telemetry", label: "Usage", max: SECTION_MAX.telemetry },
+  { key: "crm", label: "CRM", max: SECTION_MAX.crm },
+  { key: "gong", label: "Gong", max: SECTION_MAX.gong },
+] as const;
+
+function ScoreCell({
+  sec,
+  score,
+}: {
+  sec: Record<"telemetry" | "crm" | "gong", number>;
+  score: number;
+}) {
+  const title = `${SCORE_SECTIONS.map((s) => `${s.label} ${sec[s.key]}/${s.max}`).join(" · ")} · Total ${score.toFixed(1)}/100`;
+  return (
+    <div className="group relative inline-flex items-center gap-2" title={title}>
+      <SegmentedScoreBar telemetry={sec.telemetry} crm={sec.crm} gong={sec.gong} className="w-24" />
+      <span className="tabular-nums text-xs font-medium text-zinc-700 dark:text-zinc-200">
+        {score.toFixed(1)}
+      </span>
+      {/* hover breakdown */}
+      <div className="pointer-events-none absolute left-0 top-full z-30 mt-1.5 hidden w-48 rounded-lg border border-zinc-200 bg-white p-2.5 text-xs shadow-lg group-hover:block dark:border-zinc-700 dark:bg-zinc-900">
+        {SCORE_SECTIONS.map((s) => (
+          <div key={s.key} className="flex items-center justify-between gap-3 py-0.5">
+            <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+              <span className={`h-2 w-2 rounded-full ${SECTION_SWATCH[s.key]}`} />
+              {s.label}
+            </span>
+            <span className="tabular-nums text-zinc-500">
+              {sec[s.key]} / {s.max}
+            </span>
+          </div>
+        ))}
+        <div className="mt-1 flex items-center justify-between gap-3 border-t border-zinc-100 pt-1.5 font-medium text-zinc-800 dark:border-zinc-800 dark:text-zinc-100">
+          <span>Priority score</span>
+          <span className="tabular-nums">{score.toFixed(1)} / 100</span>
+        </div>
       </div>
     </div>
   );

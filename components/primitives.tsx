@@ -1,5 +1,18 @@
 import type { PriorityTier } from "@/lib/scoring";
 
+// "AI sparkle" glyph — the mark for the Next Action agent.
+export function AgentIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 1.5c.4 4.4 3.1 7.1 7.5 7.5-4.4.4-7.1 3.1-7.5 7.5-.4-4.4-3.1-7.1-7.5-7.5C8.9 8.6 11.6 5.9 12 1.5z" />
+      <path
+        d="M18.5 13.5c.18 2 1.32 3.14 3.3 3.3-1.98.16-3.12 1.3-3.3 3.3-.18-2-1.32-3.14-3.3-3.3 1.98-.16 3.12-1.3 3.3-3.3z"
+        opacity="0.65"
+      />
+    </svg>
+  );
+}
+
 const TIER_STYLES: Record<PriorityTier, string> = {
   Critical: "bg-red-100 text-red-700 ring-red-600/20 dark:bg-red-950 dark:text-red-300 dark:ring-red-400/20",
   High: "bg-orange-100 text-orange-700 ring-orange-600/20 dark:bg-orange-950 dark:text-orange-300 dark:ring-orange-400/20",
@@ -43,11 +56,13 @@ export function SegmentedScoreBar({
   crm,
   gong,
   className = "",
+  height = "h-2",
 }: {
   telemetry: number;
   crm: number;
   gong: number;
   className?: string;
+  height?: string;
 }) {
   const seg = [
     { key: "telemetry" as const, v: telemetry },
@@ -56,14 +71,14 @@ export function SegmentedScoreBar({
   ];
   return (
     <div
-      className={`flex h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800 ${className}`}
+      className={`flex ${height} w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800 ${className}`}
       role="img"
       aria-label={`Score ${Math.round(telemetry + crm + gong)} of 100`}
     >
-      {seg.map((s) => (
+      {seg.map((s, i) => (
         <div
           key={s.key}
-          className={SECTION_COLORS[s.key]}
+          className={`${SECTION_COLORS[s.key]} ${i > 0 ? "border-l border-white dark:border-zinc-900" : ""}`}
           style={{ width: `${Math.max(0, Math.min(100, s.v))}%` }}
         />
       ))}

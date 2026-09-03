@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { AgentIcon } from "@/components/primitives";
 
-// Sub-navigation shared by the two account drill-in pages.
+// Sub-navigation shared by the account drill-in pages.
 export function AccountTabs({
   domain,
   active,
@@ -10,9 +11,9 @@ export function AccountTabs({
 }) {
   const id = encodeURIComponent(domain);
   const tabs = [
-    { key: "score", label: "Score breakdown", href: `/accounts/${id}` },
-    { key: "signals", label: "Account signals", href: `/accounts/${id}/signals` },
-    { key: "next-action", label: "Next action", href: `/accounts/${id}/next-action` },
+    { key: "score", label: "Score breakdown", agent: false, href: `/accounts/${id}` },
+    { key: "signals", label: "Account signals", agent: false, href: `/accounts/${id}/signals` },
+    { key: "next-action", label: "Next action", agent: true, href: `/accounts/${id}/next-action` },
   ] as const;
 
   return (
@@ -21,12 +22,13 @@ export function AccountTabs({
         <Link
           key={t.key}
           href={t.href}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+          className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
             active === t.key
               ? "border-brand text-zinc-900 dark:text-zinc-100"
               : "border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
           }`}
         >
+          {t.agent && <AgentIcon className={`h-3.5 w-3.5 ${active === t.key ? "text-brand" : ""}`} />}
           {t.label}
         </Link>
       ))}
