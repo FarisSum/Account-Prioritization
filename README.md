@@ -42,6 +42,7 @@ One row per customer account:
 | `account_owner` | the Account Manager |
 | `annual_revenue` | USD (bigint) — the customer's own revenue; the scoring CRM rule reads this |
 | `adyen_arr` | USD (bigint) — Adyen's ARR *from* this account; the dashboard "ARR to Adyen" column + summary cards read this |
+| `num_years_as_customer` | numeric(3,1) — tenure as an Adyen customer; dashboard "Tenure" column |
 | `contract_renewal_date` | date |
 | `employee_growth` | YoY %, may be negative |
 | `employee_count` | integer |

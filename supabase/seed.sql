@@ -238,3 +238,11 @@ from (
   join public.crm cr on cr.domain = t.domain
 ) sub
 where c.domain = sub.domain;
+
+-- crm.num_years_as_customer — established / large accounts skew longer,
+-- hypergrowth accounts shorter.
+update public.crm set num_years_as_customer = greatest(0.6, round(
+    (2.0 + ((('x' || substr(md5(domain), 13, 8))::bit(32)::bigint % 90)::numeric / 10.0))
+    - case when employee_growth > 35 then 2.0 when employee_growth > 20 then 1.0 else 0 end
+    + case when employee_count > 3000 then 1.5 else 0 end
+, 1));

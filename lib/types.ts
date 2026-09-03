@@ -11,6 +11,7 @@ export interface CrmAccount {
   employee_count: number;
   annual_revenue: number; // USD — the customer company's own revenue (scoring input)
   adyen_arr: number; // USD — Adyen's annual revenue FROM this account
+  num_years_as_customer: number; // tenure as an Adyen customer, one decimal
   contract_renewal_date: string | null; // ISO date
   location: string | null;
   country: string | null;

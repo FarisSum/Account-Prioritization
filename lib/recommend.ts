@@ -31,6 +31,7 @@ function internalBrief(
   lines.push(`- Location: ${account.location ?? "—"}, ${account.country ?? "—"}`);
   lines.push(`- Customer annual revenue: ${formatCompactCurrency(account.annual_revenue)}`);
   lines.push(`- Adyen ARR from this account: ${formatCompactCurrency(account.adyen_arr)}`);
+  lines.push(`- Adyen customer for: ${account.num_years_as_customer} years`);
   lines.push(`- Employee count: ${account.employee_count} (growth ${account.employee_growth}% YoY)`);
   lines.push(`- Contract renewal: ${formatDate(account.contract_renewal_date)}`);
 

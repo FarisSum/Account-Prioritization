@@ -9,7 +9,7 @@ import type { Recommendation } from "@/lib/types";
 import type { ScoredAccount } from "@/lib/view";
 
 type TierFilter = "All" | PriorityTier;
-type SortKey = "priority" | "revenue" | "renewal" | "growth" | "employees";
+type SortKey = "priority" | "revenue" | "renewal" | "growth" | "employees" | "tenure";
 
 const TIER_FILTERS: TierFilter[] = ["All", "Critical", "High", "Medium", "Low"];
 
@@ -19,6 +19,7 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "renewal", label: "Renewal date" },
   { key: "growth", label: "Headcount growth" },
   { key: "employees", label: "Employee count" },
+  { key: "tenure", label: "Customer tenure" },
 ];
 
 function sortValue(entry: ScoredAccount, key: SortKey): number {
@@ -36,6 +37,8 @@ function sortValue(entry: ScoredAccount, key: SortKey): number {
       return a.employee_growth;
     case "employees":
       return a.employee_count;
+    case "tenure":
+      return a.num_years_as_customer;
   }
 }
 
@@ -46,20 +49,25 @@ const ASCENDING: Record<SortKey, boolean> = {
   renewal: true,
   growth: true,
   employees: false,
+  tenure: false,
 };
 
 function domainLabel(domain: string): string {
   return domain.replace(/^https?:\/\//, "");
 }
 
+const NEW_CUSTOMER_YEARS = 2;
+
 export function Dashboard({
   entries,
   owners,
   recommendations,
+  renewalRisk,
 }: {
   entries: ScoredAccount[];
   owners: string[];
   recommendations: Record<string, Pick<Recommendation, "status" | "headline">>;
+  renewalRisk: Record<string, boolean>;
 }) {
   const [query, setQuery] = useState("");
   const [tier, setTier] = useState<TierFilter>("All");
@@ -170,7 +178,7 @@ export function Dashboard({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full min-w-[1000px] border-collapse text-sm">
+        <table className="w-full min-w-[1080px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
               <th className="px-3 py-2.5 font-medium">#</th>
@@ -178,8 +186,9 @@ export function Dashboard({
               <th className="px-3 py-2.5 font-medium">Owner</th>
               <th className="px-3 py-2.5 font-medium">Industry</th>
               <th className="px-3 py-2.5 font-medium">ARR to Adyen</th>
+              <th className="px-3 py-2.5 font-medium">Tenure</th>
               <th className="px-3 py-2.5 font-medium">Renewal</th>
-              <th className="px-3 py-2.5 font-medium">Growth</th>
+              <th className="px-3 py-2.5 font-medium">Emp Growth</th>
               <th className="px-3 py-2.5 font-medium">Employees</th>
               <th className="px-3 py-2.5 font-medium">Priority</th>
               <th className="px-3 py-2.5 font-medium">Tier</th>
@@ -217,12 +226,33 @@ export function Dashboard({
                     >
                       {a.company_name}
                     </Link>
-                    <div className="text-xs text-zinc-400">{domainLabel(a.domain)}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-zinc-400">{domainLabel(a.domain)}</span>
+                      {a.num_years_as_customer < NEW_CUSTOMER_YEARS && (
+                        <span
+                          title={`Adyen customer for ${a.num_years_as_customer.toFixed(1)} years`}
+                          className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                        >
+                          New customer
+                        </span>
+                      )}
+                      {renewalRisk[a.domain] && (
+                        <span
+                          title="A recent call flagged a renewal or pricing concern"
+                          className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
+                        >
+                          Renewal risk
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">{a.account_owner}</td>
                   <td className="px-3 py-2.5 text-zinc-600 dark:text-zinc-300">{a.industry ?? "—"}</td>
                   <td className="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-300">
                     {formatCompactCurrency(a.adyen_arr)}
+                  </td>
+                  <td className="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-300">
+                    {a.num_years_as_customer.toFixed(1)} yrs
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-300">
                     {formatRelativeDays(daysUntil(a.contract_renewal_date))}
@@ -275,7 +305,7 @@ export function Dashboard({
                 {naText && (
                   <tr className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/60">
                     <td />
-                    <td colSpan={10} className="px-3 pb-2.5 pt-0">
+                    <td colSpan={11} className="px-3 pb-2.5 pt-0">
                       <Link
                         href={naHref}
                         className="group inline-flex items-baseline gap-1.5 text-xs text-zinc-600 hover:text-brand dark:text-zinc-400"
@@ -302,7 +332,7 @@ export function Dashboard({
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-3 py-10 text-center text-sm text-zinc-400">
+                <td colSpan={12} className="px-3 py-10 text-center text-sm text-zinc-400">
                   No accounts match these filters.
                 </td>
               </tr>

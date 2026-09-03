@@ -28,6 +28,12 @@ export default async function Page() {
     ]),
   );
 
+  const renewalRisk = Object.fromEntries(
+    signals
+      .filter((s) => s.category === "Renewal" && s.sentiment === "Negative")
+      .map((s) => [s.domain, true]),
+  );
+
   const owners = Array.from(new Set(accounts.map((a) => a.account_owner))).sort((a, b) =>
     a.localeCompare(b),
   );
@@ -50,7 +56,12 @@ export default async function Page() {
         </div>
       </header>
 
-      <Dashboard entries={entries} owners={owners} recommendations={recommendations} />
+      <Dashboard
+        entries={entries}
+        owners={owners}
+        recommendations={recommendations}
+        renewalRisk={renewalRisk}
+      />
     </main>
   );
 }
