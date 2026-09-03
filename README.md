@@ -47,11 +47,13 @@ One row per customer account:
 | `employee_growth` | YoY %, may be negative |
 | `employee_count` | integer |
 
-Schema + `supabase/seed.sql` (20 sample customers, matching usage rows, ~5 call
-signals each) are already applied to project `omcmtkmhcxucllarookv`. RLS allows
-anon `SELECT` only. Usage values are derived deterministically from each
-`crm` row (`md5(domain)` is the only randomness) so they track account size and
-growth.
+Schema + `supabase/seed.sql` (70 sample customers — 20 hand-written + 50
+generated — each with a matching `product_telemetry` row and ~5–6 `gong_signals`)
+are already applied to project `omcmtkmhcxucllarookv`. RLS allows anon `SELECT`
+only. `product_telemetry`, `adyen_arr`, `num_years_as_customer` and the generated
+`gong_signals` are all derived deterministically from `md5(domain)` so the set is
+stable and re-runnable. `recommendations` is left empty — the AM generates those
+in the UI.
 
 To re-seed or run locally: `supabase db reset` (applies migrations + seed), or
 paste `seed.sql` into the SQL editor.

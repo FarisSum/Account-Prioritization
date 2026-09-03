@@ -28,6 +28,92 @@ values
 on conflict (domain) do nothing;
 
 -- ---------------------------------------------------------------------------
+-- 50 more accounts. Identities are hand-picked; employee_growth /
+-- employee_count / annual_revenue / renewal date are derived deterministically
+-- from md5(domain) so the set is stable and re-runnable.
+-- ---------------------------------------------------------------------------
+insert into public.crm
+  (domain, company_name, lead_type, account_owner, industry, location, country,
+   employee_growth, employee_count, annual_revenue, contract_renewal_date)
+with ids(domain, company_name, owner, industry, location, country) as (
+  values
+  ('https://brightpath-logistics.com','Brightpath Logistics','Marcus Lee','Logistics','Columbus, OH','USA'),
+  ('https://vantagehealth.io','Vantage Health','Priya Nair','Healthcare','Nashville, TN','USA'),
+  ('https://corewave.io','Corewave Systems','Dana Whitfield','SaaS','San Jose, CA','USA'),
+  ('https://northgate-retail.com','Northgate Retail','Sam Cool','Retail','Minneapolis, MN','USA'),
+  ('https://summitbiologics.com','Summit Biologics','Tom Alvarez','Biotech','Cambridge, MA','USA'),
+  ('https://ridgelinefin.com','Ridgeline Financial','Rachel Kim','Fintech','Charlotte, NC','USA'),
+  ('https://cobaltgaming.com','Cobalt Gaming','Ben Okafor','Gaming','Los Angeles, CA','USA'),
+  ('https://emberline-energy.com','Emberline Energy','Sofia Duarte','Energy','Tulsa, OK','USA'),
+  ('https://fathommedia.tv','Fathom Media','Liam Byrne','Media','Atlanta, GA','USA'),
+  ('https://graniteinsurance.com','Granite Insurance','Marcus Lee','Insurance','Columbus, OH','USA'),
+  ('https://harborview-travel.com','Harborview Travel','Priya Nair','Travel','Orlando, FL','USA'),
+  ('https://ironwoodmfg.com','Ironwood Manufacturing','Dana Whitfield','Manufacturing','Cleveland, OH','USA'),
+  ('https://juniper-ag.com','Juniper Agriculture','Sam Cool','Agriculture','Lincoln, NE','USA'),
+  ('https://kestrelaero.com','Kestrel Aerospace','Tom Alvarez','Aerospace','Wichita, KS','USA'),
+  ('https://luminaedu.org','Lumina Education','Rachel Kim','Education','Austin, TX','USA'),
+  ('https://nimbus-cloud.io','Nimbus Cloud','Ben Okafor','SaaS','Seattle, WA','USA'),
+  ('https://onyx-security.io','Onyx Security','Sofia Duarte','Cybersecurity','Reston, VA','USA'),
+  ('https://polaris-realty.com','Polaris Realty','Liam Byrne','Real Estate','Denver, CO','USA'),
+  ('https://quartztelecom.net','Quartz Telecom','Marcus Lee','Telecom','Dallas, TX','USA'),
+  ('https://sable-automotive.com','Sable Automotive','Priya Nair','Automotive','Detroit, MI','USA'),
+  ('https://terracehospitality.com','Terrace Hospitality','Dana Whitfield','Hospitality','Miami, FL','USA'),
+  ('https://vireo-health.com','Vireo Health','Sam Cool','Healthcare','Boston, MA','USA'),
+  ('https://willowbrook-retail.com','Willowbrook Retail','Tom Alvarez','Retail','Chicago, IL','USA'),
+  ('https://zephyrpay.io','Zephyr Pay','Rachel Kim','Fintech','New York, NY','USA'),
+  ('https://arcadia-games.com','Arcadia Games','Ben Okafor','Gaming','Vancouver, BC','Canada'),
+  ('https://bluepoint-marine.com','Bluepoint Marine','Sofia Duarte','Logistics','Seattle, WA','USA'),
+  ('https://cedarpine-foods.com','Cedarpine Foods','Liam Byrne','Consumer Goods','Portland, OR','USA'),
+  ('https://driftwood-apparel.com','Driftwood Apparel','Marcus Lee','Retail','Los Angeles, CA','USA'),
+  ('https://evergreen-power.com','Evergreen Power','Priya Nair','Energy','Houston, TX','USA'),
+  ('https://foxglen-labs.com','Foxglen Labs','Dana Whitfield','Biotech','San Diego, CA','USA'),
+  ('https://goldleaf-capital.com','Goldleaf Capital','Sam Cool','Fintech','Chicago, IL','USA'),
+  ('https://hollowcreate.io','Hollow Create','Tom Alvarez','Media','Toronto, ON','Canada'),
+  ('https://indigo-analytics.io','Indigo Analytics','Rachel Kim','SaaS','Austin, TX','USA'),
+  ('https://jasper-logistics.com','Jasper Logistics','Ben Okafor','Logistics','Memphis, TN','USA'),
+  ('https://kingfisher-air.com','Kingfisher Air','Sofia Duarte','Aerospace','Everett, WA','USA'),
+  ('https://larkspur-beauty.com','Larkspur Beauty','Liam Byrne','Consumer Goods','New York, NY','USA'),
+  ('https://mosswarehouse.com','Moss Warehouse','Marcus Lee','E-commerce','Columbus, OH','USA'),
+  ('https://nightingale-care.com','Nightingale Care','Priya Nair','Healthcare','Philadelphia, PA','USA'),
+  ('https://oakmere-realty.com','Oakmere Realty','Dana Whitfield','Real Estate','Phoenix, AZ','USA'),
+  ('https://pinecrest-outdoor.com','Pinecrest Outdoor','Sam Cool','Retail','Boulder, CO','USA'),
+  ('https://quill-software.io','Quill Software','Tom Alvarez','SaaS','Raleigh, NC','USA'),
+  ('https://rowan-insurance.com','Rowan Insurance','Rachel Kim','Insurance','Hartford, CT','USA'),
+  ('https://silverbrook-mining.com','Silverbrook Mining','Ben Okafor','Mining','Salt Lake City, UT','USA'),
+  ('https://thornfield-agri.com','Thornfield Agri','Sofia Duarte','Agriculture','Des Moines, IA','USA'),
+  ('https://umbra-media.com','Umbra Media','Liam Byrne','Media','Los Angeles, CA','USA'),
+  ('https://verdant-farms.com','Verdant Farms','Marcus Lee','Agriculture','Fresno, CA','USA'),
+  ('https://wren-payments.io','Wren Payments','Priya Nair','Fintech','London','United Kingdom'),
+  ('https://yarrow-wellness.com','Yarrow Wellness','Dana Whitfield','Healthcare','Denver, CO','USA'),
+  ('https://ashford-realty.com','Ashford Realty','Sam Cool','Real Estate','Boston, MA','USA'),
+  ('https://beacon-education.org','Beacon Education','Tom Alvarez','Education','Boston, MA','USA')
+),
+h as (
+  select *,
+    ('x'||substr(md5(domain),1,8))::bit(32)::bigint  h1,
+    ('x'||substr(md5(domain),9,8))::bit(32)::bigint  h2,
+    ('x'||substr(md5(domain),17,8))::bit(32)::bigint h3
+  from ids
+),
+j as (
+  select *, (h1%1000)::numeric/1000.0 j1, (h2%1000)::numeric/1000.0 j2, (h3%1000)::numeric/1000.0 j3 from h
+),
+calc as (
+  select *,
+    round((-22 + 52*j1 - 8*j2)::numeric, 1) as emp_growth,
+    greatest(40, round(40 + 9000 * power(j2, 2.3))::int) as emp_count
+  from j
+)
+select
+  domain, company_name, 'Customer', owner, industry, location, country,
+  emp_growth,
+  emp_count,
+  least(800000000, round(emp_count * (30000 + 110000*j3))::bigint),
+  (date '2026-09-15' + (h3 % 640)::int)
+from calc
+on conflict (domain) do nothing;
+
+-- ---------------------------------------------------------------------------
 -- product_telemetry — one row per account, derived deterministically from the
 -- crm row so the numbers track each account's size and growth. md5(domain) is
 -- the only randomness, so re-running is stable.
@@ -100,7 +186,13 @@ on conflict (domain) do nothing;
 -- account: growing accounts skew Expansion/Cross-sell positive; shrinking
 -- accounts skew Competitive/Renewal/Feedback negative.
 -- ---------------------------------------------------------------------------
-insert into public.gong_signals (transcript_id, domain, category, sentiment, signal, transcript_text) values
+-- last_detected_date is computed inline (column is NOT NULL): positive signals
+-- skew recent (~260-day span), others wider.
+insert into public.gong_signals (transcript_id, domain, category, sentiment, signal, transcript_text, last_detected_date)
+select g.transcript_id, g.domain, g.category, g.sentiment, g.signal, g.transcript_text,
+  date '2026-08-25' - ((('x' || substr(md5(g.transcript_id), 1, 8))::bit(32)::bigint
+    % (case when g.sentiment = 'Positive' then 260 else 400 end))::int)
+from (values
 ('TRX-001','https://rhythmtx.com','Expansion','Positive','Geographic expansion',$q$We're planning to expand our commercial operations into four additional European markets next year, and we'd want those transactions running through Adyen.$q$),
 ('TRX-002','https://rhythmtx.com','Expansion','Positive','Transaction growth',$q$Our transaction volumes have been growing significantly, and we expect that trend to continue as our patient programs expand.$q$),
 ('TRX-003','https://rhythmtx.com','Cross-sell','Positive','Recurring Payments',$q$We're looking at expanding our subscription and recurring payment capabilities and would like to understand what Adyen can support.$q$),
@@ -207,15 +299,60 @@ insert into public.gong_signals (transcript_id, domain, category, sentiment, sig
 ('TRX-104','https://coralreef-hosp.com','Feedback','Negative','Support escalation',$q$Several outages during peak season hurt us and the post-incident follow-up was thin.$q$),
 ('TRX-105','https://coralreef-hosp.com','Stakeholder','Negative','Champion departed',$q$Our main point of contact on the finance side departed and the relationship has cooled.$q$),
 ('TRX-106','https://coralreef-hosp.com','Expansion','Negative','Volume decline',$q$Occupancy is down across our properties and payment volume has fallen with it.$q$)
+) as g(transcript_id, domain, category, sentiment, signal, transcript_text)
 on conflict (transcript_id) do nothing;
 
--- last_detected_date: positive signals skew recent (~260-day span), others wider.
-update public.gong_signals set last_detected_date =
-  date '2026-08-25' - (
-    (('x' || substr(md5(transcript_id), 1, 8))::bit(32)::bigint)
-    % (case when sentiment = 'Positive' then 260 else 400 end)
-  )::int
-where last_detected_date is null;
+-- ---------------------------------------------------------------------------
+-- gong_signals for the additional 50 accounts — 6 per account from templates,
+-- archetype (A growing / B steady / C declining) chosen by employee_growth,
+-- company name + a rotating competitor substituted in. Only fills accounts
+-- that don't already have signals.
+-- ---------------------------------------------------------------------------
+insert into public.gong_signals (transcript_id, domain, category, sentiment, signal, transcript_text, last_detected_date)
+with tmpl(arch, ord, category, sentiment, signal, tpl) as (
+  values
+  ('A',1,'Expansion','Positive','Geographic expansion',     $t${co} is opening operations in several new markets over the next two quarters and wants that volume on Adyen.$t$),
+  ('A',2,'Expansion','Positive','Volume growth',             $t$Processing volume at {co} is up sharply year over year and the forecast has it climbing further.$t$),
+  ('A',3,'Cross-sell','Positive','Recurring Payments',       $t${co} wants to consolidate subscription billing and expand its use of recurring payments.$t$),
+  ('A',4,'Cross-sell','Positive','Risk',                     $t$As volume grows, {co} wants to look harder at Adyen risk and fraud tooling.$t$),
+  ('A',5,'Competitive','Negative','Competitor evaluation',   $t${co} is also running a parallel evaluation with {comp}, mostly on pricing.$t$),
+  ('A',6,'Stakeholder','Positive','Executive engagement',    $t$The CFO at {co} is now sponsoring the payments workstream and wants a quarterly review.$t$),
+  ('B',1,'Feedback','Positive','Reporting value',            $t$Consolidated reporting has made monthly reconciliation faster for the {co} finance team.$t$),
+  ('B',2,'Feedback','Negative','Integration friction',       $t$Some older systems at {co} still need custom work to talk to the Adyen APIs.$t$),
+  ('B',3,'Renewal','Neutral','Renewal timing',               $t${co} expects to renew but wants to review pricing and volume commitments first.$t$),
+  ('B',4,'Stakeholder','Positive','New payments stakeholder',$t${co} has brought in a new Head of Payments who will review the setup this quarter.$t$),
+  ('B',5,'Cross-sell','Neutral','Payouts',                   $t${co} asked some early questions about using Adyen for payouts, no decision yet.$t$),
+  ('B',6,'Competitive','Negative','Competitor evaluation',   $t${co} is benchmarking processing costs against {comp} as part of an annual vendor review.$t$),
+  ('C',1,'Competitive','Negative','Competitor evaluation',   $t${co} is in active discussions with {comp} about moving volume off Adyen.$t$),
+  ('C',2,'Renewal','Negative','Pricing concern',             $t$Margins at {co} are under pressure and current processing rates are hard to justify to the board.$t$),
+  ('C',3,'Feedback','Negative','Support escalation',         $t${co} has had unresolved escalations this quarter and it is eroding confidence.$t$),
+  ('C',4,'Stakeholder','Negative','Champion departed',       $t$The {co} payments lead who owned this relationship has left; the new team is reviewing vendors.$t$),
+  ('C',5,'Expansion','Negative','Volume decline',            $t${co} is consolidating to fewer providers as transaction volume falls year over year.$t$),
+  ('C',6,'Feedback','Negative','Reporting limitation',       $t$Reporting does not give the {co} finance team what they need, so reconciliation is still manual.$t$)
+),
+comp(i, name) as (values (0,'Stripe'),(1,'Braintree'),(2,'Checkout.com'),(3,'Worldpay'),(4,'Fiserv'),(5,'PayPal'),(6,'Nuvei'),(7,'Global Payments')),
+acct as (
+  select c.domain, c.company_name,
+    case when c.employee_growth >= 15 then 'A' when c.employee_growth <= -10 then 'C' else 'B' end as arch,
+    (('x'||substr(md5(c.domain),25,8))::bit(32)::bigint) hc
+  from public.crm c
+  where not exists (select 1 from public.gong_signals g where g.domain = c.domain)
+),
+rws as (
+  select a.domain, t.category, t.sentiment, t.signal,
+    replace(replace(t.tpl, '{co}', a.company_name), '{comp}', cm.name) as transcript_text,
+    row_number() over (order by a.domain, t.ord) as rn
+  from acct a
+  join tmpl t on t.arch = a.arch
+  join comp cm on cm.i = (a.hc % 8)
+)
+select
+  'TRX-G' || lpad(rn::text, 4, '0'),
+  domain, category, sentiment, signal, transcript_text,
+  date '2026-08-25' - ((('x'||substr(md5('TRX-G' || lpad(rn::text, 4, '0')),1,8))::bit(32)::bigint
+    % (case when sentiment = 'Positive' then 260 else 400 end))::int)
+from rws
+on conflict (transcript_id) do nothing;
 
 -- ---------------------------------------------------------------------------
 -- crm.adyen_arr — Adyen's annual revenue from each account = processed volume

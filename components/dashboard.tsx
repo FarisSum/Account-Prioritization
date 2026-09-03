@@ -56,8 +56,6 @@ function domainLabel(domain: string): string {
   return domain.replace(/^https?:\/\//, "");
 }
 
-const NEW_CUSTOMER_YEARS = 2;
-
 export function Dashboard({
   entries,
   owners,
@@ -228,20 +226,12 @@ export function Dashboard({
                     </Link>
                     <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                       <span className="text-xs text-zinc-400">{domainLabel(a.domain)}</span>
-                      {a.num_years_as_customer < NEW_CUSTOMER_YEARS && (
-                        <span
-                          title={`Adyen customer for ${a.num_years_as_customer.toFixed(1)} years`}
-                          className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300"
-                        >
-                          New customer
-                        </span>
-                      )}
                       {renewalRisk[a.domain] && (
                         <span
                           title="A recent call flagged a renewal or pricing concern"
                           className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
                         >
-                          Renewal risk
+                          Churn Risk
                         </span>
                       )}
                     </div>
